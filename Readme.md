@@ -161,6 +161,12 @@ Install dependencies
 npm install
 ```
 
+Quick start
+
+```bash
+npm run start
+```
+
 Run in dev mode
 
 ```bash
