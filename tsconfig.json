@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {   
+     "rootDir": "./src",
+     "outDir": "dist",
+    "module": "CommonJS",
+    "target": "es2020",
+    "types": ["node", "jest"],
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+  
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "strict": true,
+    "jsx": "react-jsx",
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+    "allowJs": true,
+    "esModuleInterop": true,
+  },
+  "include": ["src/**/*"]
+}
