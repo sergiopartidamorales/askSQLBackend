@@ -10,6 +10,7 @@ const config: sql.config = {
   database: process.env.DATABASE_NAME || "analytics",
   user: process.env.DATABASE_USER || "",
   password: process.env.DATABASE_PASSWORD || "",
+  requestTimeout: parseInt(process.env.DATABASE_REQUEST_TIMEOUT_MS || "15000"),
   options: {
     encrypt: true,
     trustServerCertificate: true,

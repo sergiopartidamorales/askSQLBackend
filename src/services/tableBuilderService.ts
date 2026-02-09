@@ -35,6 +35,21 @@ class QueryBuilderService {
         }
     }
 
+    private enforceTopLimit(sql: string, limit: number): string {
+        const normalized = sql.trim();
+        // If query already has TOP or uses OFFSET/FETCH, leave it unchanged
+        if (/\btop\s+\d+\b/i.test(normalized) || /\boffset\s+\d+\s+rows\b/i.test(normalized)) {
+            return sql;
+        }
+        // Insert TOP after SELECT or SELECT DISTINCT
+        const selectDistinct = /^\s*select\s+distinct\b/i;
+        if (selectDistinct.test(normalized)) {
+            return normalized.replace(selectDistinct, `SELECT DISTINCT TOP ${limit}`);
+        }
+        const select = /^\s*select\b/i;
+        return normalized.replace(select, `SELECT TOP ${limit}`);
+    }
+
     getDataTableStream = async (prompt: string, sendEvent: SSECallback): Promise<void> => {
         if (!prompt) {
             throw new Error("Prompt parameter is required");
@@ -60,17 +75,18 @@ class QueryBuilderService {
   
         const cleanedSQL = this.cleanSQL(generatedSQL);
         this.assertSafeSql(cleanedSQL);
+        const limitedSQL = this.enforceTopLimit(cleanedSQL, 30);
 
         // 4. Execute query
         sendEvent('status', { message: 'Executing query...', step: 3 });
-        const result = await executeQuery(cleanedSQL);
+        const result = await executeQuery(limitedSQL);
 
         if (!result) {
             throw new Error("Query execution returned no results");
         }
     
         sendEvent('complete', {
-            query: cleanedSQL,
+            query: limitedSQL,
             data: result,
             message: 'Query executed successfully'
         });

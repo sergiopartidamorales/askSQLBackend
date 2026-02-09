@@ -19,7 +19,7 @@ export class SqlPromptBuilder {
             1. Column names are CASE-SENSITIVE.
             2. No table aliases - always use full table names.
             3. Use square brackets [TableName].[ColumnName] only when required (spaces or reserved words).
-            4. Use TOP 30 by default unless the user specifies a different limit.
+            4. Use TOP 30 by default unless the user specifies a different limit (server will enforce TOP 30 if omitted).
             5. Write clean, readable SQL.
             
             OUTPUT FORMAT:
