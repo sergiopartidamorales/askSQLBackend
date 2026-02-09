@@ -142,7 +142,6 @@ Environment variables in `.env`
 
 ```env
 OPENAI_API_KEY=sk-xxx...
-DATABASE_CONNECTION_STRING=Server=xxx;Database=xxx;...
 NODE_ENV=production
 PORT=3000
 ```
@@ -187,10 +186,10 @@ npm test
 
 ## Required Environment Variables
 
-These must be populated to connect to your SQL Server instance.
+These must be populated to connect to your SQL Server instance. This project
+uses SQL authentication via the `DATABASE_*` variables (recommended for this setup).
 
 ```env
-DB_CONNECTION_STRING=xxxx
 PORT=8080
 DATABASE_SERVER=xxxx
 DATABASE_PORT=xxx

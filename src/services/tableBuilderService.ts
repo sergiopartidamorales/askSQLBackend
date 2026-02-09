@@ -1,6 +1,4 @@
-import { QueryResult } from "../Types";
 import { executeQuery } from "../mssql";
-import { IRecordSet } from "mssql";
 import { LLMClient } from "./helpers/llmClient";
 import { getDatabaseSchema, getRelevantTables } from "./helpers/schema.service";
 import { SqlPromptBuilder } from "./helpers/sqlPromptBuilder";
@@ -22,6 +20,19 @@ class QueryBuilderService {
         // Remove any leading/trailing whitespace
         cleaned = cleaned.trim();
         return cleaned;
+    }
+
+    private assertSafeSql(sql: string): void {
+        const normalized = sql.trim();
+        if (!/^\s*select\b/i.test(normalized)) {
+            throw new Error("Only SELECT queries are allowed");
+        }
+        if (/[;]+/.test(normalized.replace(/\s*;?\s*$/, ""))) {
+            throw new Error("Multiple statements are not allowed");
+        }
+        if (/\b(insert|update|delete|drop|alter|create|truncate|merge|exec|execute|grant|revoke)\b/i.test(normalized)) {
+            throw new Error("Only SELECT queries are allowed");
+        }
     }
 
     getDataTableStream = async (prompt: string, sendEvent: SSECallback): Promise<void> => {
@@ -48,6 +59,7 @@ class QueryBuilderService {
         }            
   
         const cleanedSQL = this.cleanSQL(generatedSQL);
+        this.assertSafeSql(cleanedSQL);
 
         // 4. Execute query
         sendEvent('status', { message: 'Executing query...', step: 3 });
