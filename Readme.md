@@ -190,12 +190,14 @@ These must be populated to connect to your SQL Server instance. This project
 uses SQL authentication via the `DATABASE_*` variables (recommended for this setup).
 
 ```env
+OPENAI_API_KEY=YOUR_KEY_HERE
 PORT=8080
-DATABASE_SERVER=xxxx
-DATABASE_PORT=xxx
-DATABASE_NAME=xxxx
-DATABASE_USER=xxxx
+DATABASE_SERVER=YOUR_DATABASE_SERVER
+DATABASE_PORT=YOUR_DATABASE_PORT
+DATABASE_NAME=YOUR_DATABASE_NAME
+DATABASE_USER=YOUR_DATABASE_USER
 DATABASE_PASSWORD=xxxx
+DATABASE_REQUEST_TIMEOUT_MS=15000
 ```
 
 These must be populated to connect to your OpenAI
