@@ -1,4 +1,4 @@
-﻿# AskSQL Backend - Interview Documentation
+﻿# AskSQL Backend
 
 ## Overview
 
