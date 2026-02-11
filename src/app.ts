@@ -9,7 +9,7 @@ import { errorHandler } from "./middlewares/errorHandler";
 dotenv.config();
 app.use(cors({origin: "*"}));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
