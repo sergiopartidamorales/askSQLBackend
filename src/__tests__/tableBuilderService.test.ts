@@ -1,8 +1,9 @@
 import QueryBuilderService from "../services/tableBuilderService";
-import { executeQuery } from "../mssql";
-import { getDatabaseSchema, getRelevantTables } from "../services/helpers/schema.service";
 
-jest.mock("../mssql", () => ({
+import { getDatabaseSchema, getRelevantTables } from "../services/helpers/SQL/schema.service";
+import { executeQuery } from "../data/sqlserver/mssql";
+
+jest.mock("../data/sqlserver/mssql", () => ({
   executeQuery: jest.fn(),
 }));
 

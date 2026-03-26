@@ -1,5 +1,5 @@
 import { IRecordSet } from "mssql";
-import { executeQuery } from "../../mssql";
+import { executeQuery } from "../../../data/sqlserver/mssql";
 
 const isRecordSet = (result: any): result is IRecordSet<any> => {
     return Array.isArray(result);

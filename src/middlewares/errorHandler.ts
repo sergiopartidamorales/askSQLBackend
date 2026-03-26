@@ -12,6 +12,12 @@ export const errorHandler = (
     let status = 500;
     let message = "Internal Server Error";
 
+    const errAny = err as { statusCode?: number; message?: string };
+    if (typeof errAny.statusCode === "number") {
+        status = errAny.statusCode;
+        message = errAny.message ?? message;
+    }
+
     // Axios error
     if ((err as AxiosError).isAxiosError) {
         const axiosErr = err as AxiosError<{ error: string }>;

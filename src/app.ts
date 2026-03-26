@@ -1,23 +1,25 @@
-import express, {Application, Request} from "express";
+import express, { Application, Request } from "express";
 import cors from "cors";
-const app : Application = express();
 import dotenv from "dotenv"
 import tableBuilderRoute from "./routes/tableBuilderRoute";
 import { errorHandler } from "./middlewares/errorHandler";
-
+import { limiter } from "./middlewares/rateLimiter";
+const app: Application = express();
 
 dotenv.config();
-app.use(cors({origin: "*"}));
+app.use(cors({ origin: "*" }));
 
 const PORT = process.env.PORT || 8080;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get("/", (req: Request, res) => { res.send("Hello, World!");});
-app.use("/api",  tableBuilderRoute); 
+app.use(limiter);
+
+app.get("/", (req: Request, res) => { res.send("Hello, World!"); });
+app.use("/api", tableBuilderRoute);
+
 
 app.use(errorHandler);
-
 
 if (process.env.NODE_ENV !== "test") {
     app.listen(PORT, () => {
@@ -27,4 +29,3 @@ if (process.env.NODE_ENV !== "test") {
 
 export default app;
 
- 

@@ -1,53 +1,17 @@
-import { executeQuery } from "../mssql";
+import { executeQuery } from "../data/sqlserver/mssql";
 import { LLMClient } from "./helpers/llmClient";
-import { getDatabaseSchema, getRelevantTables } from "./helpers/schema.service";
-import { SqlPromptBuilder } from "./helpers/sqlPromptBuilder";
+import { getDatabaseSchema, getRelevantTables } from "./helpers/SQL/schema.service";
+import { SqlPromptBuilder } from "./helpers/SQL/sqlPromptBuilder";
+import { assertSafeSql, cleanSQL, enforceTopLimit } from "./helpers/SQL/sqlUtils";
 
 type SSECallback = (event: string, data: any) => void;
+const UNKNOWN_TABLE_OR_COLUMN_ERROR = "ERROR: Unknown table or column";
 
 class QueryBuilderService {
     private llmClient: LLMClient;
 
     constructor() {
         this.llmClient = new LLMClient();
-    }
-
-    private cleanSQL(sql: string): string {
-        // Remove markdown code blocks (```sql or ```)
-        let cleaned = sql.replace(/```sql\n?/gi, '').replace(/```\n?/g, '');
-        // Remove backticks
-        cleaned = cleaned.replace(/`/g, '');
-        // Remove any leading/trailing whitespace
-        cleaned = cleaned.trim();
-        return cleaned;
-    }
-
-    private assertSafeSql(sql: string): void {
-        const normalized = sql.trim();
-        if (!/^\s*select\b/i.test(normalized)) {
-            throw new Error("Only SELECT queries are allowed");
-        }
-        if (/[;]+/.test(normalized.replace(/\s*;?\s*$/, ""))) {
-            throw new Error("Multiple statements are not allowed");
-        }
-        if (/\b(insert|update|delete|drop|alter|create|truncate|merge|exec|execute|grant|revoke)\b/i.test(normalized)) {
-            throw new Error("Only SELECT queries are allowed");
-        }
-    }
-
-    private enforceTopLimit(sql: string, limit: number): string {
-        const normalized = sql.trim();
-        // If query already has TOP or uses OFFSET/FETCH, leave it unchanged
-        if (/\btop\s+\d+\b/i.test(normalized) || /\boffset\s+\d+\s+rows\b/i.test(normalized)) {
-            return sql;
-        }
-        // Insert TOP after SELECT or SELECT DISTINCT
-        const selectDistinct = /^\s*select\s+distinct\b/i;
-        if (selectDistinct.test(normalized)) {
-            return normalized.replace(selectDistinct, `SELECT DISTINCT TOP ${limit}`);
-        }
-        const select = /^\s*select\b/i;
-        return normalized.replace(select, `SELECT TOP ${limit}`);
     }
 
     getDataTableStream = async (prompt: string, sendEvent: SSECallback): Promise<void> => {
@@ -59,6 +23,15 @@ class QueryBuilderService {
 
          // 1. Build Schema.
         const relevantTables = await getRelevantTables(prompt);
+        if (relevantTables.length === 0) {
+            sendEvent('complete', {
+                query: '',
+                data: [],
+                message: 'Unknown table or column'
+            });
+            sendEvent('status', { message: 'Query generation completed', step: 4 });
+            return;
+        }
         const schema = await getDatabaseSchema(relevantTables, prompt);          
 
         // 2. Build prompts
@@ -71,11 +44,21 @@ class QueryBuilderService {
         for await (const chunk of this.llmClient.generateCompletionStream(systemPrompt, userPrompt)) {
             generatedSQL += chunk;
             sendEvent('sql-chunk', { chunk });
-        }            
+        }
   
-        const cleanedSQL = this.cleanSQL(generatedSQL);
-        this.assertSafeSql(cleanedSQL);
-        const limitedSQL = this.enforceTopLimit(cleanedSQL, 30);
+        const cleanedSQL = cleanSQL(generatedSQL);
+        if (cleanedSQL.trim().toUpperCase() === UNKNOWN_TABLE_OR_COLUMN_ERROR.toUpperCase()) {
+            sendEvent('complete', {
+                query: '',
+                data: [],
+                message: 'Unknown table or column'
+            });
+            sendEvent('status', { message: 'Query generation completed', step: 4 });
+            return;
+        }
+
+        assertSafeSql(cleanedSQL);
+        const limitedSQL = enforceTopLimit(cleanedSQL, 30);
 
         // 4. Execute query
         sendEvent('status', { message: 'Executing query...', step: 3 });
